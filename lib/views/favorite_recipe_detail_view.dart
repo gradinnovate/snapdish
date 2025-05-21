@@ -1,125 +1,52 @@
-import 'dart:math'; // Keep for now if _generateFinishedDish still uses Random, but ApiService will handle it.
-
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:snapdish/utils/app_theme.dart';
+import 'package:go_router/go_router.dart'; // Will be used for navigation
+import 'package:snapdish/utils/app_theme.dart'; // For consistent styling
 import 'package:snapdish/models/recipe.dart'; // Import Recipe from models
 import 'package:snapdish/services/api_service.dart'; // Import ApiService
 
-class RecipeDetailView extends StatefulWidget {
+class FavoriteRecipeDetailView extends StatefulWidget {
   final Recipe recipe;
 
-  const RecipeDetailView({
+  const FavoriteRecipeDetailView({
     super.key,
     required this.recipe,
   });
 
   @override
-  State<RecipeDetailView> createState() => _RecipeDetailViewState();
+  State<FavoriteRecipeDetailView> createState() => _FavoriteRecipeDetailViewState();
 }
 
-class _RecipeDetailViewState extends State<RecipeDetailView> {
+class _FavoriteRecipeDetailViewState extends State<FavoriteRecipeDetailView> {
   final ApiService _apiService = ApiService();
-  bool _isGeneratingImageLoading = false; // Renamed from _isLoading for clarity
-  bool _isCurrentFavorite = false;
-  bool _isFavoriteLoading = false;
+  bool _isRemovingFavorite = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _isCurrentFavorite = widget.recipe.isFavorite; // Initialize with passed value
-    _initFavoriteStatus();
-  }
-
-  Future<void> _initFavoriteStatus() async {
+  Future<void> _removeFromFavorites() async {
     if (!mounted) return;
     setState(() {
-      _isFavoriteLoading = true;
+      _isRemovingFavorite = true;
     });
+
     try {
-      final favoriteStatus = await _apiService.isFavorite(widget.recipe.id);
-      if (mounted) {
-        setState(() {
-          _isCurrentFavorite = favoriteStatus;
-        });
-      }
-    } catch (e) {
+      await _apiService.removeFromFavorites(widget.recipe.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('無法獲取收藏狀態: $e')),
+          SnackBar(content: Text('${widget.recipe.name} removed from favorites.')),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isFavoriteLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _toggleFavoriteStatus() async {
-    if (!mounted) return;
-    setState(() {
-      _isFavoriteLoading = true;
-    });
-    try {
-      if (_isCurrentFavorite) {
-        await _apiService.removeFromFavorites(widget.recipe.id);
-        if (mounted) {
-          setState(() {
-            _isCurrentFavorite = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已從收藏中移除')),
-          );
-        }
-      } else {
-        await _apiService.addToFavorites(widget.recipe.id);
-        if (mounted) {
-          setState(() {
-            _isCurrentFavorite = true;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已加入收藏')),
-          );
+        // Check if context is still valid before popping
+        if (Navigator.of(context).canPop()) {
+             context.pop();
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('操作失敗: $e')),
+          SnackBar(content: Text('Failed to remove from favorites: $e')),
         );
       }
     } finally {
       if (mounted) {
         setState(() {
-          _isFavoriteLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _generateFinishedDish(BuildContext context) async {
-    if (!mounted) return;
-    setState(() {
-      _isGeneratingImageLoading = true;
-    });
-
-    try {
-      final generatedImageUrl = await _apiService.generateDishImage(widget.recipe);
-      if (mounted) {
-        context.push('/finishedDish', extra: generatedImageUrl);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('生成成品圖失敗: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isGeneratingImageLoading = false;
+          _isRemovingFavorite = false;
         });
       }
     }
@@ -127,37 +54,38 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    // Access recipe via widget.recipe
     final recipe = widget.recipe;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('食譜詳情'),
+        title: const Text('Favorite Recipe Details'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
             }
-          }
+          },
         ),
         actions: [
-          _isFavoriteLoading
+          _isRemovingFavorite
               ? const Padding(
                   padding: EdgeInsets.all(16.0),
                   child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2.0, color: Colors.white),
+                  ),
                 )
               : IconButton(
-                  icon: Icon(_isCurrentFavorite ? Icons.favorite : Icons.favorite_border),
-                  tooltip: _isCurrentFavorite ? '從收藏中移除' : '加入收藏',
-                  onPressed: _toggleFavoriteStatus,
+                  icon: const Icon(Icons.delete),
+                  tooltip: 'Remove from Favorites',
+                  onPressed: _removeFromFavorites,
                 ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 80), // Ensure FAB doesn't overlap last item if using FAB
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -165,7 +93,7 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
             if (recipe.imageUrl != null && recipe.imageUrl!.isNotEmpty)
               Container(
                 width: double.infinity,
-                height: 250,
+                height: 250, // Adjusted height for better visuals
                 child: Image.network(
                   recipe.imageUrl!,
                   fit: BoxFit.cover,
@@ -189,7 +117,7 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
                             Icon(Icons.error_outline, color: Colors.red, size: 50),
-                            Text('圖片加載失敗'), // "Image failed to load"
+                            Text('Error loading image.'),
                           ],
                         ),
                       ),
@@ -204,7 +132,7 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
                 color: Colors.grey[300],
                 child: const Center(
                   child: Icon(
-                    Icons.restaurant_menu,
+                    Icons.restaurant_menu, // Different icon for placeholder
                     size: 64,
                     color: Colors.white70,
                   ),
@@ -234,7 +162,7 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
                       ),
                       const SizedBox(width: 16),
                       const Icon(
-                        Icons.kitchen, // Changed from Icons.restaurant for variety
+                        Icons.kitchen, // Changed icon for style
                         size: 16,
                         color: AppTheme.textSecondaryColor,
                       ),
@@ -247,7 +175,7 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    '食材', // "Ingredients"
+                    'Ingredients', // Changed to English
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
@@ -256,18 +184,18 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.check_circle_outline,
-                          size: 16,
+                          Icons.check_circle_outline, // Changed icon for ingredients
+                          size: 16, // Slightly larger
                           color: AppTheme.primaryColor,
                         ),
                         const SizedBox(width: 8),
-                        Expanded(child: Text(ingredient)),
+                        Expanded(child: Text(ingredient)), // Expanded to handle long ingredient names
                       ],
                     ),
                   )),
                   const SizedBox(height: 24),
                   Text(
-                    '步驟', // "Steps"
+                    'Steps', // Changed to English
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
@@ -281,7 +209,7 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
                           height: 24,
                           decoration: BoxDecoration(
                             color: AppTheme.primaryColor,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(6), // Slightly rounded square
                           ),
                           child: Center(
                             child: Text(
@@ -300,24 +228,6 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
                       ],
                     ),
                   )),
-                  const SizedBox(height: 32), 
-                  if (_isGeneratingImageLoading)
-                    const Center(child: CircularProgressIndicator())
-                  else
-                    Center(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.auto_awesome), 
-                        label: const Text('生成成品圖'), 
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                          textStyle: const TextStyle(fontSize: 16),
-                        ),
-                        onPressed: () => _generateFinishedDish(context),
-                      ),
-                    ),
-                  const SizedBox(height: 24), 
                 ],
               ),
             ),
@@ -326,4 +236,4 @@ class _RecipeDetailViewState extends State<RecipeDetailView> {
       ),
     );
   }
-} 
+}
