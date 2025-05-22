@@ -22,7 +22,7 @@ class HomeView extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: CameraButton(
-                onPressed: () => context.go('/camera'),
+                onPressed: () => context.push('/ingredients-identification'),
               ),
             ),
             const SizedBox(height: 30),

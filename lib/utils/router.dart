@@ -7,6 +7,9 @@ import 'package:snapdish/views/recipe_style_view.dart';
 import 'package:snapdish/views/recipe_detail_view.dart';
 import 'package:snapdish/views/favorites_view.dart';
 import 'package:snapdish/views/history_view.dart';
+import 'package:snapdish/views/ingredients_identification_view.dart';
+import 'package:snapdish/views/recipe_style_time_selection_view.dart';
+import 'package:snapdish/views/final_dish_image_view.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -37,6 +40,21 @@ final appRouter = GoRouter(
               builder: (context, state) => RecipeDetailView(
                 recipeId: state.pathParameters['id']!,
               ),
+            ),
+            GoRoute(
+              path: 'ingredients-identification',
+              // builder: (context, state) => IngredientsIdentificationView(), //Original
+              builder: (context, state) => IngredientsIdentificationView(),
+            ),
+            GoRoute(
+              path: 'recipe-style-time-selection',
+              // builder: (context, state) => RecipeStyleTimeSelectionView(), // Original
+              builder: (context, state) => RecipeStyleTimeSelectionView(),
+            ),
+            GoRoute(
+              path: 'final-dish-image',
+              // builder: (context, state) => FinalDishImageView(), // Original
+              builder: (context, state) => FinalDishImageView(),
             ),
           ],
         ),
