@@ -1,38 +1,159 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:snapdish/utils/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
-class RecentRecipes extends StatelessWidget {
+class RecentRecipes extends StatefulWidget {
   const RecentRecipes({super.key});
 
   @override
+  State<RecentRecipes> createState() => _RecentRecipesState();
+}
+
+class _RecentRecipesState extends State<RecentRecipes> {
+  List<Map<String, dynamic>> _recentRecipes = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecentRecipes();
+  }
+
+  Future<void> _loadRecentRecipes() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? recipesJson = prefs.getString('recent_recipes');
+      
+      if (recipesJson != null) {
+        final List<dynamic> decoded = jsonDecode(recipesJson);
+        setState(() {
+          _recentRecipes = List<Map<String, dynamic>>.from(decoded);
+        });
+      } else {
+        // Use mock data if no saved recipes exist
+        setState(() {
+          _recentRecipes = [
+            {
+              'id': '1',
+              'name': '蒜蓉炒青菜',
+              'image': 'https://picsum.photos/seed/recipe1/200',
+              'time': '10分鐘',
+              'style': '中式',
+              'ingredients': [
+                '青菜 200g',
+                '蒜頭 3瓣',
+                '油 2湯匙',
+                '鹽 適量',
+              ],
+              'steps': [
+                '青菜洗淨切段',
+                '蒜頭切碎',
+                '熱鍋下油，爆香蒜末',
+                '加入青菜快速翻炒',
+                '觀察青菜熟度',
+                '加入適量鹽調味即可',
+                '完成',
+              ],
+            },
+            {
+              'id': '2',
+              'name': '清蒸魚片',
+              'image': 'https://picsum.photos/seed/recipe2/200',
+              'time': '20分鐘',
+              'style': '粵式',
+              'ingredients': [
+                '魚片 300g',
+                '薑 20g',
+                '蔥 2根',
+                '醬油 2湯匙',
+              ],
+              'steps': [
+                '魚片洗淨，薑蔥切絲',
+                '魚片上放薑蔥絲',
+                '蒸鍋水滾後，放入魚片',
+                '中火蒸10分鐘',
+                '淋上醬油即可',
+              ],
+            },
+            {
+              'id': '3',
+              'name': '番茄炒蛋',
+              'image': 'https://picsum.photos/seed/recipe3/200',
+              'time': '15分鐘',
+              'style': '家常',
+              'ingredients': [
+                '雞蛋 3個',
+                '番茄 2個',
+                '油 2湯匙',
+                '鹽 適量',
+                '糖 少許',
+              ],
+              'steps': [
+                '雞蛋打散，番茄切塊',
+                '熱鍋下油，倒入蛋液快炒',
+                '蛋熟後盛出備用',
+                '鍋中加入番茄炒軟',
+                '加入炒好的雞蛋',
+                '調味後快速翻炒均勻',
+                '出鍋裝盤',
+              ],
+            },
+          ];
+        });
+        
+        // Save the mock data for future use
+        await _saveRecentRecipes();
+      }
+    } catch (e) {
+      print('Error loading recent recipes: $e');
+      // Use mock data if loading fails
+      setState(() {
+        _recentRecipes = [
+          {
+            'id': '1',
+            'name': '蒜蓉炒青菜',
+            'image': 'https://picsum.photos/seed/recipe1/200',
+            'time': '10分鐘',
+          },
+        ];
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _saveRecentRecipes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String jsonData = jsonEncode(_recentRecipes);
+      await prefs.setString('recent_recipes', jsonData);
+    } catch (e) {
+      print('Error saving recent recipes: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // TODO: Replace with actual data from state management
-    final List<Map<String, dynamic>> mockRecipes = [
-      {
-        'id': '1',
-        'name': '蒜蓉炒青菜',
-        'image': 'https://picsum.photos/200',
-        'time': '10分鐘',
-      },
-      {
-        'id': '2',
-        'name': '清蒸魚片',
-        'image': 'https://picsum.photos/201',
-        'time': '20分鐘',
-      },
-      {
-        'id': '3',
-        'name': '番茄炒蛋',
-        'image': 'https://picsum.photos/202',
-        'time': '15分鐘',
-      },
-    ];
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (_recentRecipes.isEmpty) {
+      return const Center(child: Text('尚無最近使用的食譜'));
+    }
 
     return ListView.builder(
-      itemCount: mockRecipes.length,
+      itemCount: _recentRecipes.length,
       itemBuilder: (context, index) {
-        final recipe = mockRecipes[index];
+        final recipe = _recentRecipes[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: InkWell(

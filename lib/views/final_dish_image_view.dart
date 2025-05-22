@@ -45,9 +45,6 @@ class _FinalDishImageViewState extends State<FinalDishImageView> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final imageHeight = screenHeight * 0.6;
-
     return Scaffold(
       appBar: AppBar(
         title: Text("Final Dish"),
@@ -56,66 +53,67 @@ class _FinalDishImageViewState extends State<FinalDishImageView> {
           onPressed: () => context.pop(),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            SizedBox(
-              height: imageHeight,
-              child: Card(
-                elevation: 4.0,
-                clipBehavior: Clip.antiAlias,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-                child: _buildImageContent(),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ListView(
+            children: <Widget>[
+              AspectRatio(
+                aspectRatio: 4/3,
+                child: Card(
+                  elevation: 4.0,
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                  child: _buildImageContent(),
+                ),
               ),
-            ),
-            SizedBox(height: 24),
+              SizedBox(height: 24),
 
-            // Action Buttons - enable only if image loaded successfully
-            ElevatedButton.icon(
-              icon: Icon(Icons.article_outlined),
-              label: Text("View Recipe Details"),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 12.0),
-                textStyle: TextStyle(fontSize: 16),
+              // Action Buttons - enable only if image loaded successfully
+              ElevatedButton.icon(
+                icon: Icon(Icons.article_outlined),
+                label: Text("View Recipe Details"),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 12.0),
+                  textStyle: TextStyle(fontSize: 16),
+                ),
+                onPressed: (_dishImage != null && !_isLoading) ? () {
+                  context.push('/recipe/mock-recipe-id');
+                } : null, // Disable if no image or still loading
               ),
-              onPressed: (_dishImage != null && !_isLoading) ? () {
-                context.push('/recipe/mock-recipe-id');
-              } : null, // Disable if no image or still loading
-            ),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildActionButton(
-                  context,
-                  icon: Icons.favorite_border,
-                  label: "Favorite",
-                  tooltip: "Save to Favorites",
-                  onPressed: (_dishImage != null && !_isLoading) ? () {
-                    print("Save to Favorites clicked for image: ${_dishImage!.id}");
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Action: Save to Favorites (Not Implemented Yet)"))
-                    );
-                  } : null,
-                ),
-                _buildActionButton(
-                  context,
-                  icon: Icons.share,
-                  label: "Share",
-                  tooltip: "Share",
-                  onPressed: (_dishImage != null && !_isLoading) ? () {
-                    print("Share clicked for image: ${_dishImage!.id}");
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Action: Share (Not Implemented Yet)"))
-                    );
-                  } : null,
-                ),
-              ],
-            ),
-            Spacer(),
-          ],
+              SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildActionButton(
+                    context,
+                    icon: Icons.favorite_border,
+                    label: "Favorite",
+                    tooltip: "Save to Favorites",
+                    onPressed: (_dishImage != null && !_isLoading) ? () {
+                      print("Save to Favorites clicked for image: ${_dishImage!.id}");
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Action: Save to Favorites (Not Implemented Yet)"))
+                      );
+                    } : null,
+                  ),
+                  _buildActionButton(
+                    context,
+                    icon: Icons.share,
+                    label: "Share",
+                    tooltip: "Share",
+                    onPressed: (_dishImage != null && !_isLoading) ? () {
+                      print("Share clicked for image: ${_dishImage!.id}");
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Action: Share (Not Implemented Yet)"))
+                      );
+                    } : null,
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );

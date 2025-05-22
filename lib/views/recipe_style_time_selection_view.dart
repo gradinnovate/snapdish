@@ -63,34 +63,42 @@ class _RecipeStyleTimeSelectionViewState extends State<RecipeStyleTimeSelectionV
               style: Theme.of(context).textTheme.titleLarge, // headline6 is deprecated
             ),
             SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: _timeOptions.map((time) => ElevatedButton(
-                child: Text(time),
-                onPressed: () {
-                  setState(() {
-                    _selectedTime = time;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _selectedTime == time ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface,
-                  foregroundColor: _selectedTime == time ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface,
-                  side: _selectedTime == time ? null : BorderSide(color: Theme.of(context).colorScheme.outline),
+            Wrap(
+              spacing: 8.0,
+              runSpacing: 4.0,
+              alignment: WrapAlignment.spaceAround,
+              children: _timeOptions.map((time) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                child: ElevatedButton(
+                  child: Text(time),
+                  onPressed: () {
+                    setState(() {
+                      _selectedTime = time;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _selectedTime == time ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface,
+                    foregroundColor: _selectedTime == time ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurface,
+                    side: _selectedTime == time ? null : BorderSide(color: Theme.of(context).colorScheme.outline),
+                  ),
                 ),
               )).toList(),
             ),
             
             Spacer(), // Pushes button to the bottom
 
-            ElevatedButton(
-              child: Text("Generate Recipe"),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16.0)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                child: Text("Generate Recipe"),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16.0)
+                ),
+                onPressed: (_selectedStyle != null && _selectedTime != null) ? () {
+                  // Navigate to the final dish image view
+                  context.push('/final-dish-image');
+                } : null, // Button disabled if not all selections are made
               ),
-              onPressed: (_selectedStyle != null && _selectedTime != null) ? () {
-                // Navigate to the final dish image view
-                context.push('/final-dish-image');
-              } : null, // Button disabled if not all selections are made
             ),
           ],
         ),

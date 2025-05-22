@@ -78,60 +78,66 @@ class _IngredientsIdentificationViewState extends State<IngredientsIdentificatio
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Identify Ingredients")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            // Placeholder for image capture/upload button
-            // Reusing or adapting lib/widgets/camera_button.dart will be handled later.
-            ElevatedButton.icon(
-              icon: Icon(Icons.camera_alt),
-              label: Text("Capture/Upload Image"),
-              onPressed: _isLoading ? null : _startIdentification, // Disable button while loading
-            ),
-            SizedBox(height: 20),
-            if (_isLoading)
-              Center(child: CircularProgressIndicator())
-            else if (_identifiedIngredients.isNotEmpty)
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // Camera button - stays at the top
+              ElevatedButton.icon(
+                icon: Icon(Icons.camera_alt),
+                label: Text("Capture/Upload Image"),
+                onPressed: _isLoading ? null : _startIdentification,
+              ),
+              SizedBox(height: 20),
+              
+              // Main content area
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Identified Ingredients:", style: Theme.of(context).textTheme.headline6),
-                    SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8.0,
-                      runSpacing: 4.0,
-                      children: _identifiedIngredients.map((ingredient) => Chip(
-                        label: Text(ingredient.name), // Use ingredient.name
-                        onDeleted: () => _removeIngredient(ingredient), // Pass Ingredient object
-                      )).toList(),
-                    ),
-                    SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.add),
-                      label: Text("Add Ingredient"),
-                      onPressed: _showAddIngredientDialog,
-                    ),
-                  ],
-                ),
-              )
-            else
-              Center(child: Text("Please capture or upload an image to identify ingredients.")),
-            
-            // Spacer to push the button to the bottom, only if there's space
-            // If the content is too much, this will not have an effect, which is fine.
-            if (!_isLoading && _identifiedIngredients.isNotEmpty) Spacer(), 
-            
-            ElevatedButton(
-              child: Text("Continue"),
-              onPressed: _identifiedIngredients.isEmpty ? null : () {
-                // Navigation to next step
-                context.push('/recipe-style-time-selection');
-              },
-            ),
-          ],
+                child: _isLoading 
+                  ? Center(child: CircularProgressIndicator())
+                  : _identifiedIngredients.isEmpty
+                    ? Center(child: Text("Please capture or upload an image to identify ingredients."))
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Identified Ingredients:", style: Theme.of(context).textTheme.titleLarge),
+                          SizedBox(height: 10),
+                          
+                          // Make the ingredients list scrollable if it gets too large
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Wrap(
+                                spacing: 8.0,
+                                runSpacing: 4.0,
+                                children: _identifiedIngredients.map((ingredient) => Chip(
+                                  label: Text(ingredient.name),
+                                  onDeleted: () => _removeIngredient(ingredient),
+                                )).toList(),
+                              ),
+                            ),
+                          ),
+                          
+                          // Add ingredient button
+                          ElevatedButton.icon(
+                            icon: Icon(Icons.add),
+                            label: Text("Add Ingredient"),
+                            onPressed: _showAddIngredientDialog,
+                          ),
+                        ],
+                      ),
+              ),
+              
+              // Continue button always at the bottom
+              SizedBox(height: 16),
+              ElevatedButton(
+                child: Text("Continue"),
+                onPressed: _identifiedIngredients.isEmpty ? null : () {
+                  context.push('/recipe-style-time-selection');
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
